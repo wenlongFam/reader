@@ -1,0 +1,48 @@
+name: Android APK 构建
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: 安装 Flutter（stable）
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: 生成 Android 平台目录
+        run: flutter create . --org com.wenlong --project-name wenlong_reader
+
+      - name: 设置应用名称为「文龙阅读器」
+        run: |
+          sed -i 's/android:label="wenlong_reader"/android:label="文龙阅读器"/' android/app/src/main/AndroidManifest.xml
+
+      - name: 拉取依赖
+        run: flutter pub get
+
+      - name: 生成 drift 代码（database.g.dart）
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: 构建 Release APK
+        run: flutter build apk --release
+
+      - name: 上传 APK 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: wenlong_reader-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
