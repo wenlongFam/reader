@@ -31,6 +31,11 @@ jobs:
         run: |
           sed -i 's/android:label="wenlong_reader"/android:label="文龙阅读器"/' android/app/src/main/AndroidManifest.xml
 
+      - name: 提升 compileSdk 至 36（file_picker 插件要求）
+        run: |
+          sed -i -E 's/compileSdkVersion +[^ ]+/compileSdkVersion 36/; s/compileSdk *=+ */compileSdk = 36/' android/app/build.gradle
+          grep -n compileSdk android/app/build.gradle
+
       - name: 拉取依赖
         run: flutter pub get
 
