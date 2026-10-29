@@ -79,7 +79,11 @@
     position:absolute;inset:0;padding:16px 20px;overflow:hidden;
     display:flex;align-items:flex-start;
   }
-  #page-text{width:100%;white-space:pre-wrap;word-break:break-word}
+  #page-text{width:100%;word-break:break-word}
+  .rich p{margin:0 0 .55em}
+  .rich .h1{font-weight:800;font-size:1.18em;margin:.9em 0 .5em;color:var(--text)}
+  .rich .h2{font-weight:700;margin:1em 0 .4em;color:var(--text)}
+  .rich .h3{font-weight:600;margin:.7em 0 .3em;color:var(--text);letter-spacing:.3px}
   #page-num{
     position:absolute;bottom:10px;left:0;right:0;text-align:center;
     font-size:11px;color:var(--sec);user-select:none;
@@ -196,10 +200,10 @@
     </div>
     <div id="read-body">
       <div id="read-page" onclick="onPageTap(event)">
-        <div id="page-text"></div>
+        <div id="page-text" class="rich"></div>
         <div id="page-num"></div>
       </div>
-      <div id="read-scroll" onscroll="onScroll()"><div id="scroll-text"></div></div>
+      <div id="read-scroll" onscroll="onScroll()"><div id="scroll-text" class="rich"></div></div>
       <div id="page-num-fix"></div>
     </div>
     <!-- 菜单 -->
@@ -251,7 +255,7 @@
   <div id="toast"></div>
 </div>
 
-<div id="measurer"></div>
+<div id="measurer" class="rich"></div>
 
 <script>
 'use strict';
@@ -335,11 +339,37 @@ function parseChapters(text){
   return chs;
 }
 
+/* ================= 标题推断与富文本渲染 ================= */
+/* TXT 无语义：按行首规则推断标题层级（与 App 端约定同一套规则）
+   h1 = 第X章/卷/回/集/部（章级，通常已被切章逻辑拆走，正文内兜底）
+   h2 = 第X节 / 一、 / （一）
+   h3 = 1. / 1、 / (1)                                            */
+const H1_RE = /^第[零〇一二三四五六七八九十百千万两0-9]+[章节卷回集部]/;
+const H2_RE = /^(第[零〇一二三四五六七八九十百千万两0-9]+节|[一二三四五六七八九十]{1,3}、|（[一二三四五六七八九十]{1,3}）)/;
+const H3_RE = /^(\d{1,3}[、.．]|[(（]\d{1,3}[)）])/;
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function classifyLine(line){
+  const t = line.trim();
+  if (!t || t.length > 32) return null;          // 太长不是标题
+  if (t.endsWith('。') && t.length > 16) return null; // 以句号结尾的长句是正文
+  if (H1_RE.test(t)) return 'h1';
+  if (H2_RE.test(t)) return 'h2';
+  if (H3_RE.test(t)) return 'h3';
+  return null;
+}
+function renderRich(text){
+  return text.split('\n').map(line => {
+    if (!line.trim()) return '';
+    const c = classifyLine(line);
+    return c ? `<div class="${c}">${esc(line)}</div>` : `<p>${esc(line)}</p>`;
+  }).join('');
+}
+
 /* ================= 分页引擎（与 App 同思路：二分测量） ================= */
 function paginate(text, fs, lh, w, h){
   const m = $('#measurer');
   m.style.fontSize = fs + 'px'; m.style.lineHeight = lh; m.style.width = w + 'px';
-  const fits = (s, e) => { m.textContent = text.slice(s, e); return m.scrollHeight <= h; };
+  const fits = (s, e) => { m.innerHTML = renderRich(text.slice(s, e)); return m.scrollHeight <= h; };
   const slices = []; let start = 0;
   while (start < text.length) {
     while (start < text.length && /\s/.test(text[start])) start++;
@@ -442,13 +472,14 @@ function loadChapter(idx, restoreOff){
 
 function repaginate(restoreOff){
   const area = $('#read-body');
-  const w = area.clientWidth - 40, h = area.clientHeight - 40;
+  const w = area.clientWidth - 40, h = area.clientHeight - 48; // 额外 8px 余量防标题外边距溢出
   pages = paginate(cur._content, prefs.fontSize, 1.7, Math.max(w,50), Math.max(h,50));
   if (prefs.mode === 'page') {
     pageIdx = findPage(restoreOff);
     renderPage(true);
   } else {
-    $('#scroll-text').textContent = cur._content;
+    $('#scroll-text').textContent = '';
+    $('#scroll-text').innerHTML = renderRich(cur._content);
     $('#scroll-text').style.fontSize = prefs.fontSize+'px';
     $('#scroll-text').style.lineHeight = 1.7;
     $('#scroll-text').style.color = 'var(--text)';
@@ -468,7 +499,8 @@ function renderPage(animate){
   const [s,e] = pages[pageIdx];
   const el = $('#page-text');
   el.style.fontSize = prefs.fontSize+'px'; el.style.lineHeight = 1.7; el.style.color = 'var(--text)';
-  el.textContent = cur._content.slice(s, e);
+  el.textContent = '';
+  el.innerHTML = renderRich(cur._content.slice(s, e));
   $('#page-num').textContent = `${pageIdx+1} / ${pages.length}`;
   if (animate && !prefersReduced()) {
     el.animate([{opacity:.2, transform:'translateX(12px)'},{opacity:1, transform:'none'}],
