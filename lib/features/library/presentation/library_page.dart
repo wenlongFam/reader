@@ -69,12 +69,12 @@ class LibraryPage extends ConsumerWidget {
   }
 
   Future<void> _pickAndImport(BuildContext context, WidgetRef ref) async {
-    final picked = await FilePicker.pickFiles(
+    // file_picker 13.x：pickFile 返回单个 PlatformFile?
+    final file = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: ['txt', 'epub'],
-      withData: false,
     );
-    final path = picked?.files.single.path;
+    final path = file?.path;
     if (path == null || !context.mounted) return;
 
     final messenger = ScaffoldMessenger.of(context);
