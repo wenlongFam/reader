@@ -225,7 +225,7 @@ class _ReaderPageState extends ConsumerState<ReaderPage> {
           ref.read(readerPrefsProvider).mode);
       await _db.into(_db.readingProgresses).insertOnConflictUpdate(
             ReadingProgressesCompanion.insert(
-              bookId: widget.bookId,
+              bookId: Value(widget.bookId),
               chapterIndex: ch,
               charOffset: Value(off),
               updatedAt: Value(DateTime.now()),

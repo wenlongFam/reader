@@ -52,7 +52,7 @@ class ImportService {
                 bookId: bookId,
                 seq: i,
                 title: chapters[i].title,
-                byteOffset: Value(chapters[i].byteOffset),
+                byteOffset: chapters[i].byteOffset,
               ),
             );
       }
@@ -84,7 +84,7 @@ class ImportService {
                 bookId: bookId,
                 seq: i,
                 title: result.chapters[i].title,
-                byteOffset: const Value(0),
+                byteOffset: 0,
                 content: Value(result.chapters[i].plainText),
               ),
             );
