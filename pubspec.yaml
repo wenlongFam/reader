@@ -15,7 +15,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.24
   path_provider: ^2.1.4
   path: ^1.9.0
-  file_picker: ^8.1.2
+  file_picker: ^11.0.3
   shared_preferences: ^2.3.2
   archive: ^3.6.1
   xml: ^6.5.0
@@ -27,11 +27,6 @@ dev_dependencies:
   flutter_lints: ^4.0.0
   drift_dev: ^2.20.3
   build_runner: ^2.4.12
-
-dependency_overrides:
-  # file_picker 8.x 自身编译于 android-34，其传递依赖 flutter_plugin_android_lifecycle
-  # 的最新版要求 compileSdk 36，会导致 AAR 元数据检查失败；固定到兼容版本
-  flutter_plugin_android_lifecycle: 2.0.19
 
 flutter:
   uses-material-design: true
