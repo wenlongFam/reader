@@ -80,10 +80,11 @@
     display:flex;align-items:flex-start;
   }
   #page-text{width:100%;word-break:break-word}
-  .rich p{margin:0 0 .55em}
-  .rich .h1{font-weight:800;font-size:1.18em;margin:.9em 0 .5em;color:var(--text)}
-  .rich .h2{font-weight:700;margin:1em 0 .4em;color:var(--text)}
-  .rich .h3{font-weight:600;margin:.7em 0 .3em;color:var(--text);letter-spacing:.3px}
+  .rich p{margin:0 0 .55em;text-indent:2em}
+  .rich .h1{font-weight:800;font-size:1.18em;margin:.9em 0 .5em;color:var(--text);text-indent:0}
+  .rich .h2{font-weight:700;font-size:1.05em;margin:1.1em 0 .4em;color:var(--text);text-indent:0;
+    border-left:3px solid #8B6F47;padding-left:8px}
+  .rich .h3{font-weight:600;margin:.7em 0 .3em;color:var(--text);letter-spacing:.3px;text-indent:0}
   #page-num{
     position:absolute;bottom:10px;left:0;right:0;text-align:center;
     font-size:11px;color:var(--sec);user-select:none;
@@ -292,7 +293,7 @@ function makeSampleBook(id, title, author, format, paras, chapterTitles, perChap
   chapterTitles.forEach((t, ci) => {
     text += t + '\n';
     for (let i = 0; i < perChapter; i++) {
-      text += paras[(ci*3+i) % paras.length] + paras[(ci*3+i+2) % paras.length] + '\n';
+      text += paras[(ci*perChapter+i) % paras.length] + '\n';
     }
   });
   return {id, title, author, format, text};
@@ -308,18 +309,37 @@ const storyParas = [
   '他把那页卷宗凑近灯火，纸上浮出一行小字：见此字者，已入局中。火苗恰好熄了。',
 ];
 const guideParas = [
-  '这是文龙阅读器的交互 Demo。左右两侧点击可以翻页，中间点击呼出菜单。',
-  '菜单里可以调字号、切换白/米黄/夜间主题、调亮度，也可以切换翻页与滚动两种模式。',
-  '你的阅读进度会自动保存在浏览器里。合上页面再打开，还能回到刚才那一页。',
-  '书签功能在右上角：点 🔖 在当前位置加书签，点 ≡ 查看书签列表并跳转。',
-  '目录在右上角 ☰ 里，可以快速跳到任意章节。底部也有上一章/下一章按钮。',
-  '这个 Demo 和 Flutter App 的交互设计完全一致，用来在开发前验证手感与流程。',
+  '这是文龙阅读器的交互 Demo，你现在看到的这行就是正文段落样式。',
+  '一、翻页模式的手势',
+  '1. 左右两侧 30% 区域：点击翻上一页或下一页。',
+  '2. 中间区域：呼出顶部和底部菜单。',
+  '3. 翻到章节末尾继续后翻，会自动进入下一章。',
+  '翻页动画是轻量的滑入效果，跟随系统"减少动态效果"设置自动关闭。',
+  '二、滚动模式',
+  '在菜单里把模式切到"滚动"后，整章内容连续滚动。',
+  '滚动模式下进度按位置比例记录，同样支持断点续读。',
+  '1. 滚动时写进度做了节流，不会频繁写存储。',
+  '三、设置即改即见',
+  '字号、主题、亮度调整后，当前页会按新样式重新分页。',
+  '1. 重排后会停留在你正在读的位置，不会跳回章节开头。',
+  '2. 测量和渲染用的是同一套样式，标题变大也不会溢出页面。',
+  '你的阅读进度会自动保存在浏览器里。',
+  '合上页面再打开，还能回到刚才那一页。',
+  '一、书签与目录',
+  '1. 点右上角 🔖 在当前位置加书签，摘 40 字做摘要。',
+  '2. 点 ≡ 查看书签列表并一键跳转。',
+  '目录在右上角 ☰ 里，可以快速跳到任意章节。',
+  '这个 Demo 和 Flutter App 的交互设计完全一致。',
+  '二、导入真实书籍',
+  '1. 书库页点"导入书籍"，选择一个 TXT 文件。',
+  '2. 编码自动识别：UTF-8 优先，失败自动转 GBK。',
+  '文件较大也没关系，章节按行扫描、正文按需加载。',
 ];
 const books = LS.get('books', null) || [
   makeSampleBook(1, '山海异闻录', '佚名 · 演示', 'TXT', storyParas,
     ['第一章 雨夜来客','第二章 灯下卷宗','第三章 城南旧宅','第四章 铜镜背面','第五章 子时开审'], 16),
   makeSampleBook(2, '阅读器使用指南', 'Demo 内置', 'EPUB', guideParas,
-    ['第一章 手势与翻页','第二章 设置与主题','第三章 进度与书签'], 10),
+    ['第一章 手势与翻页','第二章 设置与主题','第三章 进度与书签'], 8),
 ];
 LS.set('books', books);
 
@@ -350,8 +370,7 @@ const H3_RE = /^(\d{1,3}[、.．]|[(（]\d{1,3}[)）])/;
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function classifyLine(line){
   const t = line.trim();
-  if (!t || t.length > 32) return null;          // 太长不是标题
-  if (t.endsWith('。') && t.length > 16) return null; // 以句号结尾的长句是正文
+  if (!t || t.length > 40) return null;   // 太长不是标题（列表项允许以句号结尾）
   if (H1_RE.test(t)) return 'h1';
   if (H2_RE.test(t)) return 'h2';
   if (H3_RE.test(t)) return 'h3';
