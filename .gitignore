@@ -1,0 +1,22 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 平台生成目录（flutter create 生成后各自有 .gitignore）
+# android/.gradle 等
+
+# 日志与临时文件
+*.log
+.DS_Store
+
+# WorkBuddy 本地工作数据
+.workbuddy/
