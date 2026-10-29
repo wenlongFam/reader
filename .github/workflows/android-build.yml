@@ -33,8 +33,12 @@ jobs:
 
       - name: 提升 compileSdk 至 36（file_picker 插件要求）
         run: |
-          sed -i -E 's/compileSdkVersion +[^ ]+/compileSdkVersion 36/; s/compileSdk *=+ */compileSdk = 36/' android/app/build.gradle
-          grep -n compileSdk android/app/build.gradle
+          for f in android/app/build.gradle android/app/build.gradle.kts; do
+            if [ -f "$f" ]; then
+              sed -i -E 's/compileSdkVersion +[^ ]+/compileSdkVersion 36/; s/compileSdk *=+ */compileSdk = 36/' "$f"
+              grep -n compileSdk "$f"
+            fi
+          done
 
       - name: 拉取依赖
         run: flutter pub get
