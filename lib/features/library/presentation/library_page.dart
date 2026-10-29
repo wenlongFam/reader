@@ -69,7 +69,7 @@ class LibraryPage extends ConsumerWidget {
   }
 
   Future<void> _pickAndImport(BuildContext context, WidgetRef ref) async {
-    final picked = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['txt', 'epub'],
       withData: false,
