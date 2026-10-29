@@ -35,7 +35,7 @@ jobs:
         run: |
           for f in android/app/build.gradle android/app/build.gradle.kts; do
             if [ -f "$f" ]; then
-              sed -i -E 's/compileSdkVersion +[^ ]+/compileSdkVersion 36/; s/compileSdk *=+ */compileSdk = 36/' "$f"
+              sed -i -E 's/compileSdkVersion +[^ ]+/compileSdkVersion 36/; s/compileSdk *=+ *[A-Za-z0-9_.]+/compileSdk = 36/' "$f"
               grep -n compileSdk "$f"
             fi
           done
